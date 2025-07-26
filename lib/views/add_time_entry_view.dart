@@ -1,115 +1,144 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:time_tracker/models/time_entry_model.dart';
+import 'package:provider/provider.dart';
 import 'package:time_tracker/providers/project_task_provider.dart';
 
-class AddTimeEntryView extends StatefulWidget {
-  @override
-  _AddTimeEntryScreenState createState() => _AddTimeEntryScreenState();
-}
-
-class _AddTimeEntryScreenState extends State<AddTimeEntryView> {
-  final _formKey = GlobalKey<FormState>();
-  String projectId = '';
-  String taskId = '';
-  double totalTime = 0.0;
-  DateTime date = DateTime.now();
-  String notes = '';
+class AddTimeEntryView extends StatelessWidget {
+  const AddTimeEntryView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final TextEditingController projectController = TextEditingController();
+    final TextEditingController taskController = TextEditingController();
+    final TextEditingController notesController = TextEditingController();
+    final TextEditingController timeController = TextEditingController();
+    DateTime? selectedDate;
+
     return Scaffold(
-      appBar: AppBar(title: Text('Add Time Entry')),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: <Widget>[
-            DropdownButtonFormField<String>(
-              value: projectId,
-              onChanged: (String? newValue) {
-                setState(() {
-                  projectId = newValue!;
-                });
-              },
-              decoration: InputDecoration(labelText: 'Project'),
-              items:
-                  <String>[
-                    'Project 1',
-                    'Project 2',
-                    'Project 3',
-                  ] // Dummy project names
-                  .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
+      appBar: AppBar(
+        title: Text('Add Time Entry'),
+        centerTitle: true,
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: StatefulBuilder(
+        builder: (context, setState) {
+          return Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            DropdownButtonFormField<String>(
-              value: taskId,
-              onChanged: (String? newValue) {
-                setState(() {
-                  taskId = newValue!;
-                });
-              },
-              decoration: InputDecoration(labelText: 'Task'),
-              items:
-                  <String>['Task 1', 'Task 2', 'Task 3'] // Dummy task names
-                  .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-            ),
-            TextFormField(
-              decoration: InputDecoration(labelText: 'Total Time (hours)'),
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter total time';
-                }
-                if (double.tryParse(value) == null) {
-                  return 'Please enter a valid number';
-                }
-                return null;
-              },
-              onSaved: (value) => totalTime = double.parse(value!),
-            ),
-            TextFormField(
-              decoration: InputDecoration(labelText: 'Notes'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter some notes';
-                }
-                return null;
-              },
-              onSaved: (value) => notes = value!,
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  _formKey.currentState!.save();
-                  Provider.of<TimeEntryProvider>(
-                    context,
-                    listen: false,
-                  ).addTimeEntry(
-                    TimeEntry(
-                      id: DateTime.now().toString(), // Simple ID generation
-                      projectId: projectId,
-                      taskId: taskId,
-                      totalTime: totalTime,
-                      date: date,
-                      notes: notes,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: projectController,
+                    decoration: InputDecoration(
+                      labelText: 'Project',
+                      border: OutlineInputBorder(),
                     ),
-                  );
-                  Navigator.pop(context);
-                }
-              },
-              child: Text('Save'),
+                  ),
+                  SizedBox(height: 12),
+                  TextField(
+                    controller: taskController,
+                    decoration: InputDecoration(
+                      labelText: 'Task',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  TextField(
+                    controller: timeController,
+                    decoration: InputDecoration(
+                      labelText: 'Total Time (hours)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  SizedBox(height: 12),
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Date',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today, size: 20),
+                    ),
+                    readOnly: true,
+                    controller: TextEditingController(
+                      text:
+                          selectedDate == null
+                              ? ''
+                              : "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}",
+                    ),
+                    onTap: () async {
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (pickedDate != null) {
+                        setState(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                  ),
+                  SizedBox(height: 12),
+                  TextField(
+                    controller: notesController,
+                    decoration: InputDecoration(
+                      labelText: 'Notes',
+                      maintainHintHeight: true,
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 6,
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (projectController.text.isEmpty ||
+                          taskController.text.isEmpty ||
+                          timeController.text.isEmpty ||
+                          selectedDate == null) {
+                        return;
+                      }
+                      final entry = TimeEntry(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        projectId: projectController.text,
+                        taskId: taskController.text,
+                        totalTime: double.tryParse(timeController.text) ?? 0.0,
+                        date: selectedDate!,
+                        notes: notesController.text,
+                      );
+                      Provider.of<TimeEntryProvider>(
+                        context,
+                        listen: false,
+                      ).addTimeEntry(entry);
+                      Navigator.pop(context, entry);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Save',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

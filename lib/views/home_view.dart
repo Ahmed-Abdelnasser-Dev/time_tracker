@@ -1,43 +1,97 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:time_tracker/models/time_entry_model.dart';
-import 'package:time_tracker/providers/project_task_provider.dart';
-import 'add_time_entry_view.dart';
+import 'package:time_tracker/widgets/all_entries_widget.dart';
+import 'package:time_tracker/widgets/grouped_entrires_widget.dart';
 
 class HomeView extends StatelessWidget {
+  const HomeView({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Time Entries')),
-      body: Consumer<TimeEntryProvider>(
-        builder: (context, provider, child) {
-          return ListView.builder(
-            itemCount: provider.entries.length,
-            itemBuilder: (context, index) {
-              final entry = provider.entries[index];
-              return ListTile(
-                title: Text('${entry.projectId} - ${entry.totalTime} hours'),
-                subtitle: Text(
-                  '${entry.date.toString()} - Notes: ${entry.notes}',
+    return DefaultTabController(
+      initialIndex: 0,
+      length: 2,
+      child: Scaffold(
+        //* AppBar with title and TabBar
+        appBar: AppBar(
+          title: Text('Time Tracker'),
+          centerTitle: true,
+          backgroundColor: Colors.deepPurple,
+          foregroundColor: Colors.white,
+          bottom: TabBar(
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            tabs: <Widget>[
+              Tab(text: 'All Entries'),
+              Tab(text: 'Grouped Entries'),
+            ],
+          ),
+        ),
+
+        //* Drawer for navigation
+        drawer: Drawer(
+          child: ListView(
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(color: Colors.deepPurple),
+                child: Center(
+                  child: Text(
+                    'Menu',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
+              ),
+              ListTile(
+                title: Text(
+                  'Manage Projects',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+                ),
+                leading: Icon(Icons.folder, color: Colors.deepPurple),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                tileColor: Colors.deepPurple.shade50,
                 onTap: () {
-                  // This could open a detailed view or edit screen
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/manageProjects');
                 },
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Navigate to the screen to add a new time entry
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AddTimeEntryView()),
-          );
-        },
-        child: Icon(Icons.add),
-        tooltip: 'Add Time Entry',
+              ),
+              Divider(),
+              ListTile(
+                title: Text(
+                  'Manage Tasks',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+                ),
+                leading: Icon(Icons.task, color: Colors.deepPurple),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                tileColor: Colors.deepPurple.shade50,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/manageTasks');
+                },
+              ),
+            ],
+          ),
+        ),
+        //* TabBarView to switch between Projects and Tasks
+        body: TabBarView(
+          children: <Widget>[AllEntriesWidget(), GroupedEntriresWidget()],
+        ),
+
+        //* Button to add time entry
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/addTimeEntry');
+          },
+          tooltip: 'Add Time Entry',
+          child: Icon(Icons.add),
+        ),
       ),
     );
   }
